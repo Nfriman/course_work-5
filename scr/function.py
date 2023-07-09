@@ -38,3 +38,30 @@ def open_data_base(comand: 'str'):
             cur.execute(comand)
             read = cur.fetchall()
             return read
+
+def get_user():
+    """Функция для взаимодействия с пользователем"""
+    print("Для получения нужных вам данных выберите соотвествующую цифру\n"
+          "1 - получает список всех компаний и количество вакансий у каждой компании\n"
+          "2 - получает список всех вакансий с указанием названия компании, названия вакансии и зарплаты и ссылки на "
+          "вакансию\n"
+          "3 - получает среднюю зарплату по вакансиям\n"
+          "4 - получает список всех вакансий, у которых зарплата выше средней по всем вакансиям\n"
+          "5 - получает список всех вакансий, в названии которых содержатся переданные в метод слова, "
+          "например “python”\n")
+
+    user_ansver = int(input('№: '))
+    from scr.class_db import DBManager
+    get_data = DBManager()
+    if user_ansver == 1:
+        return get_data.get_companies_and_vacancies_count()
+    elif user_ansver == 2:
+        return get_data.get_all_vacancies()
+    elif user_ansver == 3:
+        return get_data.get_avg_salary()
+    elif user_ansver == 4:
+        return get_data.get_vacancies_with_higher_salary()
+    elif user_ansver == 5:
+        return get_data.get_vacancies_keyword()
+    else:
+        return f'Нет такого ответа'
