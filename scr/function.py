@@ -29,3 +29,12 @@ class Parsing_hh:
                         (index['name'], salary, index['alternate_url'], index['employer']['name']))
                     cur.execute('SELECT * FROM vacancies')
         conn.close()
+
+
+def open_data_base(comand: 'str'):
+    """Функция для получения дфнных из postegresql"""
+    with psycopg2.connect(host="localhost", database="course_work_5", user="admi", password="1234") as conn:
+        with conn.cursor() as cur:
+            cur.execute(comand)
+            read = cur.fetchall()
+            return read
