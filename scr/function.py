@@ -5,8 +5,11 @@ import psycopg2
 class Parsing_hh:
     """ Класс для парсинга вакансий на сайте hh.ru """
 
-    def __init__(self, employer_id):
-        self.employer_id = employer_id  # id компаний для получения вакансийв
+    def __init__(self, employer_id, database, user, password):
+        self.database = database  # название базы данных
+        self.user = user  # Имя пользователя в postgresql
+        self.password = password  # Пароль пользователя
+        self.employer_id = employer_id  # id компаний для получения вакансий
 
         parms = {'employer_id': self.employer_id,
                  "per_page": 100}
@@ -14,7 +17,7 @@ class Parsing_hh:
 
     def get_data(self):
         """метод для полученния данных о вакансиях и компанниях"""
-        with psycopg2.connect(host="localhost", database="course_work_5", user="admi", password="1234") as conn:
+        with psycopg2.connect(host='localhost', database=self.database, user=self.user, password=self.password) as conn:
             with conn.cursor() as cur:
                 cur.execute('TRUNCATE TABLE vacancies RESTART IDENTITY')
                 for index in self.hh['items']:
@@ -38,6 +41,7 @@ def open_data_base(comand: 'str'):
             cur.execute(comand)
             read = cur.fetchall()
             return read
+
 
 def get_user():
     """Функция для взаимодействия с пользователем"""
@@ -65,3 +69,11 @@ def get_user():
         return get_data.get_vacancies_keyword()
     else:
         return f'Нет такого ответа'
+
+
+def create_table(user_database, user_admi, user_password):
+    """Функция для создания таблицы"""
+    with psycopg2.connect(host="localhost", database=user_database, user=user_admi, password=user_password) as conn:
+        with conn.cursor() as cur:
+            cur.execute("CREATE TABLE vacancies2 (vacancies_id serial,vacancies_name text,salary int,vacancies_url text, employers_name varchar(30), CONSTRAINT pk_vacancies2_vacancies_id PRIMARY KEY (vacancies_id));")
+    conn.close()
