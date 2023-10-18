@@ -1,14 +1,11 @@
 import requests
 import psycopg2
+from scr.config import config
 
 
 class Parsing_hh:
     """ Класс для парсинга вакансий на сайте hh.ru """
-
-    def __init__(self, employer_id, database, user, password):
-        self.database = database  # название базы данных
-        self.user = user  # Имя пользователя в postgresql
-        self.password = password  # Пароль пользователя
+    def __init__(self, employer_id):
         self.employer_id = employer_id  # id компаний для получения вакансий
 
         parms = {'employer_id': self.employer_id,
@@ -17,26 +14,19 @@ class Parsing_hh:
 
     def get_data(self):
         """метод для полученния данных о вакансиях и компанниях"""
-        with psycopg2.connect(host='localhost', database=self.database, user=self.user, password=self.password) as conn:
-            with conn.cursor() as cur:
-                cur.execute('TRUNCATE TABLE vacancies RESTART IDENTITY')
-                for index in self.hh['items']:
-                    if index['salary'] is None:
-                        salary = 0  # если не указана ЗП
-                    else:
-                        salary = index['salary']['from']  # ЗП
+        for index in self.hh['items']:
+            if index['salary'] is None:
+                salary = 0  # если не указана ЗП
+            else:
+                salary = index['salary']['from']  # ЗП
 
-                    cur.execute(
-                        'INSERT INTO vacancies(vacancies_name, salary, vacancies_url, employers_name) VALUES (%s, %s, '
-                        '%s, %s)',
-                        (index['name'], salary, index['alternate_url'], index['employer']['name']))
-                    cur.execute('SELECT * FROM vacancies')
-        conn.close()
+            data_recording(index['name'], salary, index['alternate_url'], index['employer']['name'])
+
 
 
 def open_data_base(comand: 'str'):
     """Функция для получения дфнных из postegresql"""
-    with psycopg2.connect(host="localhost", database="course_work_5", user="admi", password="1234") as conn:
+    with psycopg2.connect(**config) as conn:
         with conn.cursor() as cur:
             cur.execute(comand)
             read = cur.fetchall()
@@ -71,9 +61,21 @@ def get_user():
         return f'Нет такого ответа'
 
 
-def create_table(user_database, user_admi, user_password):
-    """Функция для создания таблицы"""
-    with psycopg2.connect(host="localhost", database=user_database, user=user_admi, password=user_password) as conn:
+def create_table():
+    """Функция для создания таблицы и его очистки таблицы"""
+    with psycopg2.connect(**config) as conn:
         with conn.cursor() as cur:
-            cur.execute("CREATE TABLE vacancies2 (vacancies_id serial,vacancies_name text,salary int,vacancies_url text, employers_name varchar(30), CONSTRAINT pk_vacancies2_vacancies_id PRIMARY KEY (vacancies_id));")
+            cur.execute(
+                "CREATE TABLE IF NOT EXISTS vacancies (vacancies_id serial,vacancies_name text,salary int,vacancies_url text, employers_name varchar(100), CONSTRAINT pk_vacancies1_vacancies1_id PRIMARY KEY (vacancies_id));")
+            cur.execute('TRUNCATE TABLE vacancies RESTART IDENTITY')
+
     conn.close()
+
+def data_recording(name, salary, url, em_name):
+    """Функция для ввода данных в таблицы"""
+    with psycopg2.connect(**config) as conn:
+        with conn.cursor() as cur:
+            cur.execute('INSERT INTO vacancies (vacancies_name, salary, vacancies_url, employers_name) VALUES (%s, %s, '
+                       '%s, %s)', (name, salary, url, em_name))
+    conn.close()
+
